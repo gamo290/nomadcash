@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Viaggi Recenti - NomadCash{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="display-6"><i class="fa-solid fa-clock-rotate-left me-2 text-secondary"></i>Viaggi Recenti</h2>
+        <p class="text-muted">Ecco un riepilogo dei tuoi viaggi conclusi e quanto hai speso in ciascuno.</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <div class="card bg-light shadow-sm">
+            <div class="card-body">
+                <small class="text-uppercase text-muted fw-bold">Spesa Totale Storica</small>
+                <h3 class="mb-0 text-primary">€ {{ "%.2f"|format(totale_storico) }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% if viaggi %}
+        {% for v in viaggi %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm border-0 bg-light">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0 text-dark">{{ v.nome_viaggio }}</h5>
+                        <span class="badge bg-secondary">Concluso</span>
+                    </div>
+                    <p class="card-text text-muted small mb-3">
+                        <i class="fa-regular fa-calendar-days me-1"></i> {{ v.data_partenza }} al {{ v.data_fine }}
+                    </p>
+                    <p class="card-text small mb-4">
+                        {{ v.descrizione_itinerario[:100] }}{% if v.descrizione_itinerario|length > 100 %}...{% endif %}
+                    </p>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('dettaglio_viaggio', id_viaggio=v.id_viaggio) }}" class="btn btn-outline-primary btn-sm">
+                            Vedi Dettagli & Bilancio
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="mb-3">
+                <i class="fa-solid fa-plane-slash fa-3x text-muted op-50"></i>
+            </div>
+            <h4>Non hai ancora viaggi conclusi.</h4>
+            <p class="text-muted">I viaggi appariranno qui una volta superata la data di fine.</p>
+            <a href="{{ url_for('viaggi') }}" class="btn btn-primary mt-3">Vai ai viaggi attivi</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

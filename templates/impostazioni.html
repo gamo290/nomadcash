@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Impostazioni - NomadCash{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-4"><i class="fa-solid fa-gear me-2 text-secondary"></i> Impostazioni Profilo</h2>
+        
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-4">I tuoi dati</h4>
+                <form method="POST" action="{{ url_for('impostazioni') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="azione" value="aggiorna">
+                    
+                    <div class="mb-4 text-center">
+                        <div class="mb-3">
+                             <img src="{{ url_for('get_avatar', email=utente.email) }}" 
+                                  class="rounded-circle shadow-sm border" 
+                                  style="width: 120px; height: 120px; object-fit: cover;"
+                                  alt="Avatar">
+                        </div>
+                        <label class="form-label fw-bold d-block">Cambia Foto Profilo</label>
+                        <input type="file" name="avatar" class="form-control w-75 mx-auto" accept="image/*">
+                        <small class="text-muted">Max 2MB. Lascia vuoto per mantenere quella attuale.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nome</label>
+                        <input type="text" name="nome" class="form-control" value="{{ utente.nome }}" required>
+                    </div>
+
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small">Indirizzo Email</label>
+                        <input type="email" name="email" class="form-control" value="{{ utente.email }}" required>
+                        <div class="form-text text-warning small"><i class="fa-solid fa-circle-info me-1"></i> Se cambi email, verrai disconnesso per aggiornare la sessione.</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-floppy-disk me-2"></i> Salva Cambiamenti</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 border-danger border-opacity-50">
+            <div class="card-body p-4 bg-light bg-opacity-10">
+                <h5 class="fw-bold text-danger mb-3"><i class="fa-solid fa-skull-crossbones me-2"></i> Elimina Account</h5>
+                <p class="text-muted small">Questa azione è <strong>permanente</strong>. Eliminerà il tuo profilo, le tue amicizie e i viaggi di cui sei proprietario.</p>
+                <form method="POST" action="{{ url_for('impostazioni') }}" onsubmit="return confirm('Sei DAVVERO sicuro? Questa azione non può essere annullata.');">
+                    <input type="hidden" name="azione" value="elimina_account">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Sì, elimina il mio account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

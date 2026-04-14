@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Spese - NomadCash{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">💸 Gestione Spese</h2>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-4">
+        <h4 class="card-title fw-bold mb-4">Registra nuova spesa</h4>
+        
+        {% if viaggi %}
+            <form method="POST" action="{{ url_for('spese') }}">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fw-bold">Seleziona Viaggio</label>
+                        <select name="id_viaggio" id="select_viaggio" class="form-select" required onchange="filterParticipants()">
+                            <option value="">-- Scegli un viaggio --</option>
+                            {% for v in viaggi %}
+                                <option value="{{ v.id_viaggio }}" {% if id_v_selezionato == v.id_viaggio %}selected{% endif %}>{{ v.nome_viaggio }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fw-bold">Chi ha pagato?</label>
+                        <select name="email_pagatore" class="form-select" required {% if not partecipanti %}disabled{% endif %}>
+                            {% if not partecipanti %}
+                                <option value="">Seleziona prima un viaggio</option>
+                            {% else %}
+                                {% for u in partecipanti %}
+                                    <option value="{{ u.email }}" {% if u.email == session.utente_email %}selected{% endif %}>{{ u.nome }} ({{ u.email }})</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label text-muted fw-bold">Importo (€)</label>
+                        <input type="number" step="0.01" name="importo" class="form-control" required placeholder="0.00">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label text-muted fw-bold">Categoria</label>
+                        <select name="categoria" class="form-select" required>
+                            <option value="Benzina">⛽ Benzina</option>
+                            <option value="Hotel">🏨 Hotel</option>
+                            <option value="Cibo">🍔 Cibo</option>
+                            <option value="Supermercato">🛒 Supermercato</option>
+                            <option value="Trasporti">🚆 Trasporti</option>
+                            <option value="Biglietti/Attrazioni">🎟️ Biglietti</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label text-muted fw-bold">Data (Opzionale, default oggi)</label>
+                        <input type="date" name="data_spesa" class="form-control">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-muted fw-bold">Cosa è stato comprato?</label>
+                    <input type="text" name="descrizione" class="form-control" required placeholder="Es. Cena alla pizzeria da Mario">
+                </div>
+                
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary btn-lg shadow-sm" {% if not partecipanti %}disabled{% endif %}>
+                        <i class="fa-solid fa-check me-2"></i> Salva Spesa
+                    </button>
+                </div>
+            </form>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fa-solid fa-plane-slash fa-3x text-muted op-50 mb-3"></i>
+                <p class="text-muted">Devi essere parte di almeno un viaggio per aggiungere spese.</p>
+                <a href="{{ url_for('crea_viaggio') }}" class="btn btn-primary">Organizza il tuo primo viaggio</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function filterParticipants() {
+    const idViaggio = document.getElementById('select_viaggio').value;
+    if (idViaggio) {
+        window.location.href = "{{ url_for('spese') }}?id_viaggio=" + idViaggio;
+    }
+}
+</script>
+{% endblock %}
+

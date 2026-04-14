@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Modifica Viaggio - NomadCash{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Modifica viaggio: {{ viaggio.nome_viaggio }}</h2>
+    <a href="{{ url_for('dettaglio_viaggio', id_viaggio=viaggio.id_viaggio) }}" class="btn btn-outline-secondary"><i class="fa-solid fa-xmark me-2"></i> Annulla</a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('modifica_viaggio', id_viaggio=viaggio.id_viaggio) }}">
+            <div class="mb-3">
+                <label class="form-label fw-bold text-muted">Nome del Viaggio</label>
+                <input type="text" name="nome" class="form-control" value="{{ viaggio.nome_viaggio }}" required>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold text-muted">Data di Partenza</label>
+                    <input type="date" name="data_partenza" class="form-control" value="{{ viaggio.data_partenza }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold text-muted">Data di Fine</label>
+                    <input type="date" name="data_fine" class="form-control" value="{{ viaggio.data_fine }}" required>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold text-muted">Itinerario e Dettagli</label>
+                <textarea name="descrizione" class="form-control" rows="4" required>{{ viaggio.descrizione_itinerario }}</textarea>
+            </div>
+            
+            <hr class="my-4">
+            
+            <h4 class="fw-bold mb-3">Compagni di Viaggio</h4>
+            {% if amici %}
+                <div class="row g-3 mb-4">
+                {% for amico in amici %}
+                    <div class="col-md-4">
+                        <div class="form-check border rounded p-3 bg-light">
+                            <input class="form-check-input" type="checkbox" name="invitati" value="{{ amico.email }}" id="invita_{{ loop.index }}" style="margin-left: 0;" {% if amico.email in partecipanti %}checked{% endif %}>
+                            <label class="form-check-label ms-4 w-100" for="invita_{{ loop.index }}" style="cursor: pointer;">
+                                <div class="fw-bold">{{ amico.nome }}</div>
+                                <small class="text-muted">{{ amico.email }}</small>
+                            </label>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info py-3 mb-4">
+                    <i class="fa-solid fa-circle-info me-2"></i> Non hai ancora nessun compagno di viaggio nella tua lista amici. Puoi aggiungerli dalla sezione "Compagni di viaggio".
+                </div>
+            {% endif %}
+            
+            <div class="text-end">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-save me-2"></i> Salva Modifiche
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

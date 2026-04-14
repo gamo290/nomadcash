@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Dettaglio Compagno - NomadCash{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('compagni') }}">Compagni</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ amico.nome }}</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+            <!-- Profilo Compagno -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 text-center py-4">
+                    <div class="card-body">
+                         <img src="{{ url_for('get_avatar', email=amico.email) }}" 
+                              class="rounded-circle shadow mb-3 border border-light" 
+                              style="width: 120px; height: 120px; object-fit: cover;" 
+                              alt="Avatar">
+                        <h3 class="fw-bold mb-1">{{ amico.nome }}</h3>
+
+                        <p class="text-muted small mb-4">{{ amico.email }}</p>
+                        
+                        <div class="d-grid gap-2 mb-3">
+                            <form method="POST" action="{{ url_for('rimuovi_compagno') }}" onsubmit="return confirm('Sicuro di voler rimuovere {{ amico.nome }} dai tuoi compagni?');">
+                                <input type="hidden" name="email_amico" value="{{ amico.email }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                    <i class="fa-solid fa-user-minus me-1"></i> Rimuovi dai compagni
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Viaggi in Comune -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h4 class="fw-bold mb-4"><i class="fa-solid fa-map-location-dot me-2 text-primary"></i> Viaggi fatti assieme</h4>
+                        
+                        {% if viaggi %}
+                            <div class="list-group list-group-flush">
+                                {% for v in viaggi %}
+                                <div class="list-group-item px-0 py-3 border-bottom-0 mb-3 bg-light rounded shadow-xs px-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1 fw-bold text-dark">{{ v.nome_viaggio }}</h6>
+                                            <small class="text-muted"><i class="fa-regular fa-calendar me-1"></i> Partenza: {{ v.data_partenza }}</small>
+                                        </div>
+                                        <a href="{{ url_for('dettaglio_viaggio', id_viaggio=v.id_viaggio) }}" class="btn btn-sm btn-light border">Vedi Viaggio</a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fa-solid fa-shoe-prints fa-3x text-muted op-25 mb-3 d-block"></i>
+                                <p class="text-muted">Non avete ancora viaggi in comune.</p>
+                                <a href="{{ url_for('crea_viaggio') }}" class="btn btn-sm btn-primary">Organizza un viaggio!</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

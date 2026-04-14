@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Dettaglio: {{ viaggio.nome_viaggio }} - NomadCash{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="fa-solid fa-map-location-dot text-primary me-2"></i> {{ viaggio.nome_viaggio }}</h2>
+    <div>
+        <a href="{{ url_for('modifica_viaggio', id_viaggio=viaggio.id_viaggio) }}" class="btn btn-primary me-2"><i class="fa-solid fa-pen me-2"></i> Modifica</a>
+        <a href="{{ url_for('viaggi') }}" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-2"></i> Torna indietro</a>
+    </div>
+</div>
+
+<div class="row mb-4 g-3">
+    <div class="col-md-4">
+        <div class="card border-0 bg-primary bg-opacity-10 text-center py-3">
+            <span class="text-muted small fw-bold">Partenza</span>
+            <span class="fs-4 fw-bold text-primary">{{ viaggio.data_partenza }}</span>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 bg-info bg-opacity-10 text-center py-3">
+            <span class="text-muted small fw-bold">Ritorno</span>
+            <span class="fs-4 fw-bold text-info">{{ viaggio.data_fine }}</span>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 text-center py-3 {% if viaggio.data_fine >= oggi %}bg-success bg-opacity-10{% else %}bg-secondary bg-opacity-10{% endif %}">
+            <span class="text-muted small fw-bold">Stato</span>
+            {% if viaggio.data_fine >= oggi %}
+                <span class="fs-4 fw-bold text-success">In Corso</span>
+            {% else %}
+                <span class="fs-4 fw-bold text-secondary">Concluso</span>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6 mt-0">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h4 class="fw-bold mb-3">Itinerario</h4>
+                <p class="text-muted" style="white-space: pre-wrap;">{{ viaggio.descrizione_itinerario }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mt-0">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h4 class="fw-bold mb-4">Bilancio Finanziario</h4>
+                
+                {% if bilancio is string %}
+                    <div class="alert alert-info">{{ bilancio }}</div>
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('spese') }}" class="btn btn-primary w-100">Registra la prima spesa</a>
+                    </div>
+                {% else %}
+                    <div class="row g-3 mb-4">
+                        <div class="col-6 text-center">
+                            <div class="p-3 border rounded bg-light">
+                                <small class="text-muted d-block fw-bold mb-1">Totale Spese</small>
+                                <span class="fs-4 fw-bold">€ {{ bilancio.totale_da_saldare }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6 text-center">
+                            <div class="p-3 border rounded bg-light">
+                                <small class="text-muted d-block fw-bold mb-1">Quota per Persona</small>
+                                <span class="fs-4 fw-bold">€ {{ bilancio.quota_a_testa }}</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <h5 class="fw-bold mb-3 mt-2">Compagni del Viaggio & Bilancio</h5>
+                {% if partecipanti_stats|length > 1 %}
+                <ul class="list-group list-group-flush border rounded mb-4">
+                    {% for p in partecipanti_stats %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ p.nome }} {% if p.email == session['utente_email'] %}(Tu){% endif %}</h6>
+                                <small class="text-muted">Ha pagato: € {{ p.pagato }}</small>
+                            </div>
+                            <div>
+                                {% if p.netto > 0 %}
+                                    <span class="badge bg-success rounded-pill px-3 py-2" style="font-size: 0.9rem;">+ € {{ p.netto }}</span>
+                                {% elif p.netto < 0 %}
+                                    {% set abs_netto = p.netto | abs %}
+                                    <span class="badge bg-danger rounded-pill px-3 py-2" style="font-size: 0.9rem;">Deve € {{ abs_netto }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary rounded-pill px-3 py-2" style="font-size: 0.9rem;">In pari</span>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="card shadow-sm border-0 bg-light mb-4">
+                    <div class="card-body text-center p-4">
+                        <i class="fa-solid fa-user-injured fs-1 text-muted mb-3"></i>
+                        <p class="text-muted mb-0">Al momento sei l'unico partecipante in questo viaggio. Clicca su Modifica per invitare i tuoi amici (Nota: ricordati di selezionarli spuntando la casella)!</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <a href="{{ url_for('spese') }}" class="btn btn-primary w-100">
+                    <i class="fa-solid fa-plus me-2"></i> Aggiungi Nuova Spesa
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

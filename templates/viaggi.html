@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}I miei Viaggi - NomadCash{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">I tuoi Viaggi</h2>
+    <a href="{{ url_for('crea_viaggio') }}" class="btn btn-primary">
+        <i class="fa-solid fa-plus me-2"></i> Pianifica Viaggio
+    </a>
+</div>
+
+{% if viaggi %}
+    <div class="row g-4">
+        {% for viaggio in viaggi %}
+        <div class="col-md-6 col-lg-4">
+            <div class="glass-card h-100 p-4 d-flex flex-column">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h4 class="fw-bold mb-0 text-truncate" style="max-width: 70%;">{{ viaggio.nome_viaggio }}</h4>
+                        {% if viaggio.data_fine >= oggi %}
+                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 small">In corso</span>
+                        {% else %}
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 small">Concluso</span>
+                        {% endif %}
+                    </div>
+                    <span class="text-muted small">
+                        <i class="fa-solid fa-calendar-day me-1"></i> Dal {{ viaggio.data_partenza }}
+                    </span>
+                </div>
+
+                
+                <p class="text-muted small flex-grow-1">
+                    {{ viaggio.descrizione_itinerario[:80] }}{% if viaggio.descrizione_itinerario|length > 80 %}...{% endif %}
+                </p>
+
+                
+                <div class="mt-4 d-flex gap-2">
+                    <a href="{{ url_for('dettaglio_viaggio', id_viaggio=viaggio.id_viaggio) }}" class="btn btn-primary flex-grow-1">Gestisci</a>
+                    
+                    <form method="POST" action="{{ url_for('elimina_viaggio', id_viaggio=viaggio.id_viaggio) }}" onsubmit="return confirm('Vuoi davvero eliminare questo viaggio?');">
+                        <button type="submit" class="btn btn-outline-danger border-0" title="Elimina">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+{% else %}
+    <div class="text-center p-5 bg-white rounded shadow-sm border mt-4">
+        <i class="fa-solid fa-earth-americas text-muted mb-3" style="font-size: 4rem;"></i>
+        <h3 class="fw-bold">Nessun viaggio registrato</h3>
+        <p class="text-muted mb-4">Inizia a tracciare le spese del tuo prossimo viaggio con NomadCash.</p>
+        <a href="{{ url_for('crea_viaggio') }}" class="btn btn-primary btn-lg">Pianifica un nuovo viaggio</a>
+    </div>
+{% endif %}
+{% endblock %}

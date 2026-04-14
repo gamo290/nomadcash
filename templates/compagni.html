@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Compagni - NomadCash{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">👥 Compagni di viaggio</h2>
+</div>
+
+<div class="row g-4">
+    <!-- Cerca e Aggiungi -->
+    <div class="col-lg-6">
+        <div class="glass-card mb-4 h-100 p-4">
+            <h4 class="fw-bold mb-4 text-gradient"><i class="fa-solid fa-user-plus me-2"></i>Aggiungi Amico</h4>
+            <form method="POST" action="{{ url_for('compagni') }}" class="mb-5">
+                <input type="hidden" name="azione" value="invia_richiesta">
+                <div class="input-group">
+                    <input type="email" name="email_amico" class="form-control border-0 bg-white bg-opacity-50" placeholder="Email del tuo amico..." required style="border-radius: 12px 0 0 12px;">
+                    <button type="submit" class="btn btn-primary" style="border-radius: 0 12px 12px 0;">Invia</button>
+                </div>
+            </form>
+            
+            <hr class="my-4 opacity-10">
+            
+            <h4 class="fw-bold mb-4">
+                🔔 Richieste <span class="badge bg-primary rounded-pill ms-2">{{ richieste|length }}</span>
+            </h4>
+            
+            {% if richieste %}
+                <ul class="list-group list-group-flush border-0">
+                    {% for r in richieste %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 bg-transparent border-bottom border-light">
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ r.nome }}</h6>
+                                <small class="text-muted">{{ r.richiedente }}</small>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <form method="POST" action="{{ url_for('compagni') }}">
+                                    <input type="hidden" name="azione" value="accetta">
+                                    <input type="hidden" name="id_amicizia" value="{{ r.id_amicizia }}">
+                                    <button type="submit" class="btn btn-success btn-sm rounded-pill px-3" title="Accetta"><i class="fa-solid fa-check"></i></button>
+                                </form>
+                                <form method="POST" action="{{ url_for('compagni') }}">
+                                    <input type="hidden" name="azione" value="rifiuta">
+                                    <input type="hidden" name="id_amicizia" value="{{ r.id_amicizia }}">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3" title="Rifiuta"><i class="fa-solid fa-xmark"></i></button>
+                                </form>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted small"><i class="fa-solid fa-check-double me-2 text-success"></i>Nessuna nuova richiesta in sospeso.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Lista Compagni Esistenti -->
+    <div class="col-lg-6">
+        <div class="glass-card h-100 p-4">
+            <h4 class="fw-bold mb-4 text-gradient"><i class="fa-solid fa-user-group me-2"></i>I miei Compagni</h4>
+            {% if compagni %}
+                <div class="list-group list-group-flush border-0">
+                    {% for c in compagni %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 bg-transparent border-bottom border-light animate-in" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
+                            <div class="d-flex align-items-center">
+                                <div class="position-relative">
+                                    <img src="{{ url_for('get_avatar', email=c.email) }}" 
+                                         class="rounded-circle me-3 shadow-sm border border-2 border-white" 
+                                         style="width: 54px; height: 54px; object-fit: cover;" 
+                                         alt="Avatar">
+                                    <span class="position-absolute bottom-0 end-0 bg-success border border-white border-2 rounded-circle p-1 me-3 mb-1" style="width: 12px; height: 12px;"></span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold">{{ c.nome }}</h6>
+                                    <small class="text-muted">{{ c.email }}</small>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('dettaglio_compagno', email_amico=c.email) }}" class="btn btn-sm btn-white shadow-sm rounded-pill px-3 border"><i class="fa-solid fa-chevron-right text-primary"></i></a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="bg-light bg-opacity-50 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fa-solid fa-users-slash text-muted fs-2"></i>
+                    </div>
+                    <h5 class="fw-bold">Nessun compagno</h5>
+                    <p class="text-muted small">Non hai ancora aggiunto alcun compagno alla tua lista amici.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

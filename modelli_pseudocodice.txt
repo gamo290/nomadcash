@@ -1,0 +1,169 @@
+PSEUDO-CODICE DEL FILE modelli.py
+
+--- CLASSE Viaggio ---
+RAPPRESENTA UN VIAGGIO NEL SISTEMA
+
+Inizializzazione(id, nome, data_inizio, descrizione):
+    Assegna i valori forniti agli attributi dell'oggetto (id, nome, data_p, descrizione)
+    Imposta data_fine a nullo per ora
+
+Metodo create(email_creatore):
+    SE data_fine < data_inizio:
+        Solleva ERRORE: data non valida
+    APRI connessione database
+    INSERISCI nuovo viaggio nella tabella 'viaggi'
+    RECUPERA l'ID appena generato
+    COLLEGA l'utente (email_creatore) al viaggio nella tabella 'partecipanti'
+
+Metodo read():
+    CERCA nel DB il viaggio con l'ID dell'oggetto
+    RESTITUISCI i dati come dizionario
+
+Metodo update():
+    AGGIORNA nome e descrizione del viaggio nel DB usando l'ID
+
+Metodo delete():
+    CONTROLLA se esistono spese collegate a questo viaggio
+    SE esistono spese:
+        Solleva ERRORE: cancellazione bloccata
+    ALTRIMENTI:
+        ELIMINA il viaggio dal DB
+
+Metodo Statico find_viaggio_attivo():
+    RECUPERA la data di oggi
+    CERCA nel DB il primo viaggio la cui data_fine è maggiore o uguale a oggi (il più prossimo)
+    RESTITUISCI il risultato
+
+Metodo Statico get_tutti_viaggi():
+    RECUPERA tutti i viaggi dal DB ordinati per data decrescente
+    RESTITUISCI la lista di viaggi
+
+
+--- CLASSE Utente ---
+GESTISCE I DATI DEGLI UTENTI E LE LORO INTERAZIONI
+
+Inizializzazione(nome, email, avatar, password, admin):
+    Assegna i valori agli attributi dell'oggetto
+
+Metodo create():
+    CONTROLLA se l'email esiste già nel DB
+    SE esiste:
+        Solleva ERRORE: email già registrata
+    ALTRIMENTI:
+        CIFRA la password (hashing)
+        INSERISCI i dati dell'utente (nome, email, avatar, password_cifrata, admin) nel DB
+
+Metodo Statico login(email, password):
+    CERCA l'utente nel DB tramite email
+    SE utente non trovato:
+        RESTITUISCI Falso
+    SE password inserita corrisponde a quella cifrata nel DB:
+        RESTITUISCI i dati dell'utente
+    ALTRIMENTI:
+        RESTITUISCI Falso
+
+Metodo update_full(nuova_email, nuovo_avatar):
+    DISATTIVA temporaneamente i vincoli di integrità (Foreign Key Checks)
+    AGGIORNA l'email in tutte le tabelle collegate (partecipanti, amicizie, spese, utenti)
+    SE è presente un nuovo avatar:
+        AGGIORNA l'avatar nella tabella utenti
+    RIATTIVA i vincoli di integrità
+    AGGIORNA l'email dell'oggetto locale
+
+Metodo delete_full():
+    ELIMINA l'utente dalle tabelle: partecipanti, amicizie e utenti
+    (Le spese vengono gestite automaticamente se impostato il CASCADE)
+
+Metodo diventa_admin():
+    SE già admin: ERRORE
+    CONTROLLA se l'utente ha viaggi ancora in corso (data_fine >= oggi)
+    SE ha viaggi attivi: ERRORE (non può cambiare ruolo se operativo)
+    IMPOSTA admin = True nel DB
+
+Metodo diventa_non_admin(id_viaggio):
+    SE non è admin: ESCO (nessuna azione)
+    CERCA il viaggio nel DB
+    SE il viaggio è ancora in corso:
+        Solleva ERRORE: dimissioni negate
+    SE ci sono spese non pagate nel viaggio:
+        Solleva ERRORE: saldare i conti prima di lasciare il ruolo
+    IMPOSTA admin = False nel DB
+
+Metodo get_miei_viaggi(filtro):
+    DEFINISCI la condizione in base al filtro ('in_corso', 'recenti', 'tutti')
+    CERCA i viaggi a cui l'utente partecipa applicando il filtro
+    RESTITUISCI la lista dei viaggi
+
+Metodo get_compagni():
+    CERCA tutti gli utenti che hanno un'amicizia 'accettata' con l'utente corrente
+    RESTITUISCI i dati dei compagni (nome, email, avatar)
+
+Metodo get_stats():
+    CONTA viaggi attivi dell'utente
+    CONTA amici totali (accettati)
+    CALCOLA la somma totale di tutte le spese dell'utente
+    RESTITUISCI questi valori come un riepilogo
+
+Metodo get_amici_frequenti(limite):
+    TROVA gli utenti con cui si è viaggiato più spesso (contando i viaggi in comune)
+    ORDINA per frequenza decrescente
+    RESTITUISCI i primi (limite) risultati
+
+
+--- CLASSE Spesa ---
+GESTISCE LE TRANSAZIONI FINANZIARIE DEL VIAGGIO
+
+Inizializzazione(...):
+    Assegna ID viaggio, email utente, descrizione, importo (deve essere > 0), categoria, data
+    Imposta stato 'pagata' a Falso
+
+Metodo create():
+    INSERISCI i dati della spesa nella tabella 'spese'
+    RECUPERA e salva l'ID generato
+
+Metodo delete():
+    SE la spesa è già stata pagata:
+        Solleva ERRORE: non si può eliminare una spesa chiusa
+    ELIMINA la spesa dal DB
+
+Metodo segna_come_pagata():
+    SE già pagata: ERRORE
+    AGGIORNA stato 'pagata' a Vero e imposta data_pagamento a oggi nel DB
+
+Metodo Statico numero_viaggiatori(id_viaggio):
+    CONTA tutti gli utenti iscritti nella tabella partecipanti per quel viaggio
+
+Metodo Statico divisione_equa(id_viaggio):
+    RECUPERA il numero di viaggiatori
+    CALCOLA la somma di tutte le spese NON ancora pagate del viaggio
+    DIVIDI il totale per il numero di viaggiatori
+    RESTITUISCI il totale da saldare, il numero di persone e la quota individuale
+
+Metodo Statico bilancio_utente_viaggio(id_viaggio, email):
+    CALCOLA la quota individuale (tramite divisione_equa)
+    CALCOLA quanto l'utente ha già pagato (spese inserite da lui e non saldate)
+    CALCOLA il netto: (pagato dall'utente - quota che dovrebbe pagare)
+    RESTITUISCI il bilancio (se positivo è in credito, se negativo è in debito)
+
+
+--- CLASSE Amicizia ---
+GESTISCE LE RICHIESTE DI CONNESSIONE TRA UTENTI
+
+Metodo Statico invia_richiesta(mittente, destinatario):
+    VERIFICA che il destinatario esista
+    VERIFICA che mittente e destinatario non siano la stessa persona
+    VERIFICA che non esista già una richiesta o un'amicizia tra i due
+    INSERISCI nuova riga in 'amicizie' con stato 'in attesa'
+
+Metodo Statico get_richieste_ricevute(email):
+    CERCA tutte le richieste con stato 'in attesa' destinate a questa email
+    RESTITUISCI lista dei richiedenti
+
+Metodo Statico accetta_richiesta(id_amicizia):
+    AGGIORNA lo stato dell'amicizia in 'accettata'
+
+Metodo Statico rifiuta_richiesta(id_amicizia):
+    ELIMINA la riga della richiesta dal DB
+
+Metodo Statico rimuovi(email1, email2):
+    ELIMINA l'amicizia accettata tra i due utenti dal DB
