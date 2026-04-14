@@ -17,7 +17,7 @@
             <div class="col-lg-4">
                 <div class="card shadow-sm border-0 text-center py-4">
                     <div class="card-body">
-                         <img src="{{ url_for('get_avatar', email=amico.email) }}" 
+                         <img src="{{ url_for('auth.get_avatar', email=amico.email) }}" 
                               class="rounded-circle shadow mb-3 border border-light" 
                               style="width: 120px; height: 120px; object-fit: cover;" 
                               alt="Avatar">
@@ -26,7 +26,7 @@
                         <p class="text-muted small mb-4">{{ amico.email }}</p>
                         
                         <div class="d-grid gap-2 mb-3">
-                            <form method="POST" action="{{ url_for('rimuovi_compagno') }}" onsubmit="return confirm('Sicuro di voler rimuovere {{ amico.nome }} dai tuoi compagni?');">
+                            <form method="POST" action="{{ url_for('rimuovi_amico', email_amico=amico.email) }}" onsubmit="return confirm('Sicuro di voler rimuovere {{ amico.nome }} dai tuoi compagni?');">
                                 <input type="hidden" name="email_amico" value="{{ amico.email }}">
                                 <button type="submit" class="btn btn-outline-danger btn-sm w-100">
                                     <i class="fa-solid fa-user-minus me-1"></i> Rimuovi dai compagni
@@ -61,7 +61,7 @@
                             <div class="text-center py-5">
                                 <i class="fa-solid fa-shoe-prints fa-3x text-muted op-25 mb-3 d-block"></i>
                                 <p class="text-muted">Non avete ancora viaggi in comune.</p>
-                                <a href="{{ url_for('crea_viaggio') }}" class="btn btn-sm btn-primary">Organizza un viaggio!</a>
+                                <a href="{{ url_for('setup_viaggio.crea_viaggio') }}" class="btn btn-sm btn-primary">Organizza un viaggio!</a>
                             </div>
                         {% endif %}
                     </div>

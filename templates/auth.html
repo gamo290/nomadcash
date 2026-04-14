@@ -34,7 +34,7 @@
                 <div class="tab-content" id="auth-tabContent">
                     <!-- LOGIN FORM -->
                     <div class="tab-pane fade show active" id="login" role="tabpanel">
-                        <form method="POST" action="{{ url_for('login') }}">
+                        <form method="POST" action="{{ url_for('auth.login') }}">
                             <input type="hidden" name="action" value="login">
                             <div class="mb-3">
                                 <label class="form-label text-muted">Email</label>
@@ -58,7 +58,7 @@
                     
                     <!-- REGISTER FORM -->
                     <div class="tab-pane fade" id="register" role="tabpanel">
-                        <form method="POST" action="{{ url_for('login') }}" enctype="multipart/form-data">
+                        <form method="POST" action="{{ url_for('auth.login') }}" enctype="multipart/form-data">
                             <input type="hidden" name="action" value="register">
                             <div class="mb-3">
                                 <label class="form-label text-muted">Nome</label>

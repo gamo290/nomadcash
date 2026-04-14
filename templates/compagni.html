@@ -65,7 +65,7 @@
                         <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 bg-transparent border-bottom border-light animate-in" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
                             <div class="d-flex align-items-center">
                                 <div class="position-relative">
-                                    <img src="{{ url_for('get_avatar', email=c.email) }}" 
+                                    <img src="{{ url_for('auth.get_avatar', email=c.email) }}" 
                                          class="rounded-circle me-3 shadow-sm border border-2 border-white" 
                                          style="width: 54px; height: 54px; object-fit: cover;" 
                                          alt="Avatar">

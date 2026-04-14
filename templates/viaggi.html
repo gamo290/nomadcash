@@ -5,7 +5,7 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold">I tuoi Viaggi</h2>
-    <a href="{{ url_for('crea_viaggio') }}" class="btn btn-primary">
+    <a href="{{ url_for('setup_viaggio.crea_viaggio') }}" class="btn btn-primary">
         <i class="fa-solid fa-plus me-2"></i> Pianifica Viaggio
     </a>
 </div>
@@ -34,15 +34,16 @@
                     {{ viaggio.descrizione_itinerario[:80] }}{% if viaggio.descrizione_itinerario|length > 80 %}...{% endif %}
                 </p>
 
-                
                 <div class="mt-4 d-flex gap-2">
                     <a href="{{ url_for('dettaglio_viaggio', id_viaggio=viaggio.id_viaggio) }}" class="btn btn-primary flex-grow-1">Gestisci</a>
                     
-                    <form method="POST" action="{{ url_for('elimina_viaggio', id_viaggio=viaggio.id_viaggio) }}" onsubmit="return confirm('Vuoi davvero eliminare questo viaggio?');">
+                    {% if viaggio.ruolo_admin %}
+                    <form method="POST" action="{{ url_for('setup_viaggio.elimina_viaggio', id_viaggio=viaggio.id_viaggio) }}" onsubmit="return confirm('Vuoi davvero eliminare questo viaggio?');">
                         <button type="submit" class="btn btn-outline-danger border-0" title="Elimina">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </form>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -54,7 +55,7 @@
         <i class="fa-solid fa-earth-americas text-muted mb-3" style="font-size: 4rem;"></i>
         <h3 class="fw-bold">Nessun viaggio registrato</h3>
         <p class="text-muted mb-4">Inizia a tracciare le spese del tuo prossimo viaggio con NomadCash.</p>
-        <a href="{{ url_for('crea_viaggio') }}" class="btn btn-primary btn-lg">Pianifica un nuovo viaggio</a>
+        <a href="{{ url_for('setup_viaggio.crea_viaggio') }}" class="btn btn-primary btn-lg">Pianifica un nuovo viaggio</a>
     </div>
 {% endif %}
 {% endblock %}

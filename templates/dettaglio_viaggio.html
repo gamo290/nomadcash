@@ -6,7 +6,9 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold"><i class="fa-solid fa-map-location-dot text-primary me-2"></i> {{ viaggio.nome_viaggio }}</h2>
     <div>
-        <a href="{{ url_for('modifica_viaggio', id_viaggio=viaggio.id_viaggio) }}" class="btn btn-primary me-2"><i class="fa-solid fa-pen me-2"></i> Modifica</a>
+        {% if is_admin %}
+        <a href="{{ url_for('setup_viaggio.modifica_viaggio', id_viaggio=viaggio.id_viaggio) }}" class="btn btn-primary me-2"><i class="fa-solid fa-pen me-2"></i> Modifica</a>
+        {% endif %}
         <a href="{{ url_for('viaggi') }}" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-2"></i> Torna indietro</a>
     </div>
 </div>
@@ -55,23 +57,61 @@
                 {% if bilancio is string %}
                     <div class="alert alert-info">{{ bilancio }}</div>
                     <div class="text-center mt-4">
-                        <a href="{{ url_for('spese') }}" class="btn btn-primary w-100">Registra la prima spesa</a>
+                        <a href="{{ url_for('chat_spese.spese', id_viaggio=viaggio.id_viaggio) }}" class="btn btn-primary w-100">Registra la prima spesa</a>
                     </div>
                 {% else %}
-                    <div class="row g-3 mb-4">
-                        <div class="col-6 text-center">
-                            <div class="p-3 border rounded bg-light">
-                                <small class="text-muted d-block fw-bold mb-1">Totale Spese</small>
-                                <span class="fs-4 fw-bold">€ {{ bilancio.totale_da_saldare }}</span>
-                            </div>
-                        </div>
-                        <div class="col-6 text-center">
-                            <div class="p-3 border rounded bg-light">
-                                <small class="text-muted d-block fw-bold mb-1">Quota per Persona</small>
-                                <span class="fs-4 fw-bold">€ {{ bilancio.quota_a_testa }}</span>
-                            </div>
+                {% if not bilancio.confermato %}
+                    <div class="alert alert-warning py-2 mb-3" style="font-size: 0.85rem;">
+                        <i class="fa-solid fa-circle-info me-2"></i> <strong>Bilancio provvisorio:</strong> I saldi finali e la tassa NomadCash verranno applicati solo alla conferma del bilancio.
+                    </div>
+                {% endif %}
+
+                {% if bilancio.tassa_totale > 0 %}
+                    <div class="alert alert-info py-1 mb-3 text-center" style="font-size: 0.8rem;">
+                        <i class="fa-solid fa-hand-holding-dollar me-2"></i> Commissioni NomadCash accumulate: <strong>€ {{ bilancio.tassa_totale }}</strong>
+                    </div>
+                {% endif %}
+
+
+                <div class="row g-3 mb-4">
+                    <div class="col-6 text-center">
+                        <div class="p-3 border rounded bg-light">
+                            <small class="text-muted d-block fw-bold mb-1">Totale da Saldare</small>
+                            <span class="fs-4 fw-bold">€ {{ bilancio.totale_da_saldare }}</span>
                         </div>
                     </div>
+                    <div class="col-6 text-center">
+                        <div class="p-3 border rounded bg-light">
+                            <small class="text-muted d-block fw-bold mb-1">Quota Individuale</small>
+                            <span class="fs-4 fw-bold">€ {{ bilancio.quota_a_testa }}</span>
+                            {% if bilancio.confermato and bilancio.tassa_individuale > 0 %}
+                                <div class="small text-primary fw-bold mt-1" style="font-size: 0.75rem;">
+                                    <i class="fa-solid fa-calculator me-1"></i> Incl. Tassa: € {{ bilancio.tassa_individuale }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if is_admin %}
+                    <div class="mb-4">
+                        {% if not bilancio.confermato %}
+                            <form action="{{ url_for('setup_viaggio.concludi_bilancio', id_viaggio=viaggio.id_viaggio) }}" method="POST">
+                                <button type="submit" class="btn btn-warning w-100 fw-bold" onclick="return confirm('Vuoi procedere alla divisione equa? Verrà aggiunta una commissione di 0.50€ (se il totale spese > 300€) e verranno calcolati i debiti/crediti finali.')">
+                                    <i class="fa-solid fa-scale-balanced me-2"></i> Dividi Conti ed Equilibra
+                                </button>
+                            </form>
+                        {% else %}
+                            <form action="{{ url_for('setup_viaggio.riapri_bilancio', id_viaggio=viaggio.id_viaggio) }}" method="POST">
+                                <button type="submit" class="btn btn-outline-secondary w-100 fw-bold" onclick="return confirm('Riaprire il bilancio permetterà di inserire nuove spese. Ogni volta che ricalcolerai il bilancio potrà essere aggiunta una nuova commissione di 0.50€.')">
+                                    <i class="fa-solid fa-lock-open me-2"></i> Riapri Bilancio per nuove spese
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+
                 {% endif %}
                 
                 <h5 class="fw-bold mb-3 mt-2">Compagni del Viaggio & Bilancio</h5>
@@ -80,17 +120,39 @@
                     {% for p in partecipanti_stats %}
                         <li class="list-group-item d-flex justify-content-between align-items-center py-3">
                             <div>
-                                <h6 class="mb-0 fw-bold">{{ p.nome }} {% if p.email == session['utente_email'] %}(Tu){% endif %}</h6>
+                                <h6 class="mb-0 fw-bold">{{ p.nome }} {% if p.email == session['utente_email'] %}(Tu){% endif %}
+                                {% if p.ruolo_admin %}
+                                    <span class="badge bg-warning text-dark ms-2" style="font-size: 0.75rem;"><i class="fa-solid fa-crown"></i> Admin</span>
+                                {% endif %}
+                                </h6>
                                 <small class="text-muted">Ha pagato: € {{ p.pagato }}</small>
                             </div>
-                            <div>
-                                {% if p.netto > 0 %}
-                                    <span class="badge bg-success rounded-pill px-3 py-2" style="font-size: 0.9rem;">+ € {{ p.netto }}</span>
-                                {% elif p.netto < 0 %}
-                                    {% set abs_netto = p.netto | abs %}
-                                    <span class="badge bg-danger rounded-pill px-3 py-2" style="font-size: 0.9rem;">Deve € {{ abs_netto }}</span>
+                            <div class="d-flex align-items-center">
+                                {% if bilancio.confermato %}
+                                    {% if p.netto > 0 %}
+                                        <span class="badge bg-success rounded-pill px-3 py-2" style="font-size: 0.9rem;">+ € {{ p.netto }}</span>
+                                    {% elif p.netto < 0 %}
+                                        {% set abs_netto = p.netto | abs %}
+                                        <span class="badge bg-danger rounded-pill px-3 py-2" style="font-size: 0.9rem;">Deve € {{ abs_netto }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary rounded-pill px-3 py-2" style="font-size: 0.9rem;">In pari</span>
+                                    {% endif %}
                                 {% else %}
-                                    <span class="badge bg-secondary rounded-pill px-3 py-2" style="font-size: 0.9rem;">In pari</span>
+                                    <span class="badge bg-light text-muted border rounded-pill px-3 py-2" style="font-size: 0.8rem;">In sospeso</span>
+                                {% endif %}
+
+                                
+                                {% if is_admin and p.email != session['utente_email'] %}
+                                    <form action="{{ url_for('setup_viaggio.imposta_admin', id_viaggio=viaggio.id_viaggio) }}" method="POST" class="ms-2 mb-0 d-inline">
+                                        <input type="hidden" name="email_target" value="{{ p.email }}">
+                                        {% if p.ruolo_admin %}
+                                            <input type="hidden" name="azione" value="rimuovi">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger border-0 py-0" title="Rimuovi permessi Admin" onclick="return confirm('Vuoi rimettere {{ p.nome }} come viaggiatore base?')"><i class="fa-solid fa-user-minus"></i></button>
+                                        {% else %}
+                                            <input type="hidden" name="azione" value="promuovi">
+                                            <button type="submit" class="btn btn-sm btn-outline-success border-0 py-0" title="Imposta come Admin" onclick="return confirm('Vuoi promuovere {{ p.nome }} come admin?')"><i class="fa-solid fa-user-plus"></i></button>
+                                        {% endif %}
+                                    </form>
                                 {% endif %}
                             </div>
                         </li>
@@ -105,11 +167,157 @@
                 </div>
                 {% endif %}
                 
-                <a href="{{ url_for('spese') }}" class="btn btn-primary w-100">
-                    <i class="fa-solid fa-plus me-2"></i> Aggiungi Nuova Spesa
-                </a>
+                <div class="row g-2 mt-3">
+                    <div class="col-6">
+                        <a href="{{ url_for('chat_spese.spese', id_viaggio=viaggio.id_viaggio) }}" class="btn btn-primary w-100">
+                            <i class="fa-solid fa-plus me-1"></i> Nuova Spesa
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#modalCronologia">
+                            <i class="fa-solid fa-receipt me-1"></i> Cronologia
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Sezione Mappa del Viaggio -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card shadow-sm border-0 overflow-hidden">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h4 class="fw-bold mb-0"><i class="fa-solid fa-map-marked-alt text-primary me-2"></i> Mappa del Viaggio & Tappe</h4>
+                {% if is_admin %}
+                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTappa">
+                    <i class="fa-solid fa-location-plus me-1"></i> Aggiungi Tappa
+                </button>
+                {% endif %}
+            </div>
+            
+            {% if is_admin %}
+            <div class="collapse" id="collapseTappa">
+                <div class="card-body bg-light border-bottom">
+                    <form action="{{ url_for('setup_viaggio.aggiungi_tappa', id_viaggio=viaggio.id_viaggio) }}" method="POST" class="row g-3 align-items-end">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Città o Punto di Interesse</label>
+                            <div class="input-group">
+                                <input type="text" id="tappa_input" class="form-control" placeholder="es. Museo, Ristorante, Piazza...">
+                                <button class="btn btn-secondary" type="button" id="btn_cerca_tappa"><i class="fa-solid fa-magnifying-glass"></i></button>
+                            </div>
+                            <small id="tappa_feedback" class="d-none mt-1 fw-bold"></small>
+                            <input type="hidden" name="destinazione_nome" id="hidden_tappa_nome">
+                            <input type="hidden" name="lat" id="hidden_tappa_lat">
+                            <input type="hidden" name="lng" id="hidden_tappa_lng">
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" id="btn_salva_tappa" class="btn btn-primary w-100" disabled>
+                                <i class="fa-solid fa-thumbtack me-2"></i> Conferma Posizione
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card-body p-0">
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+                <div id="personal_map" style="height: 450px; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Inizializzazione Mappa
+    var map = L.map('personal_map').setView([{{ viaggio.lat or 41.9 }}, {{ viaggio.lng or 12.48 }}], 13);
+    
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
+    }).addTo(map);
+
+    var bounds = [];
+    
+    // Mostra il Marker principale della destinazione
+    {% if viaggio.lat and viaggio.lng %}
+    L.marker([{{ viaggio.lat }}, {{ viaggio.lng }}], {
+        icon: L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background-color:#0d6efd; width:20px; height:20px; border-radius:50%; border:3px solid white; shadow: 0 0 5px rgba(0,0,0,0.5)'></div>",
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        })
+    }).addTo(map).bindPopup("<b>Destinazione Principale:</b><br>{{ viaggio.destinazione_nome|replace("'", "\\'")|replace('"', '\\"') }}");
+    bounds.push([{{ viaggio.lat }}, {{ viaggio.lng }}]);
+    {% endif %}
+
+    // Aggiungi le Tappe
+    {% for t in tappe %}
+        var marker = L.marker([{{ t.lat }}, {{ t.lng }}]).addTo(map);
+        marker.bindPopup(`
+            <div class="text-center p-1">
+                <h6 class="fw-bold mb-1">{{ t.nome_tappa|replace("'", "\\'")|replace('"', '\\"')|replace("`", "\\`") }}</h6>
+                <div class="badge bg-success mb-2" style="font-size: 0.9rem;">Spesa: € {{ "%.2f"|format(t.totale_speso) }}</div>
+                {% if is_admin %}
+                <form action="{{ url_for('setup_viaggio.elimina_tappa', id_tappa=t.id_tappa) }}" method="POST" class="mt-2">
+                    <input type="hidden" name="id_viaggio" value="{{ viaggio.id_viaggio }}">
+                    <button type="submit" class="btn btn-link btn-sm text-danger p-0" onclick="return confirm('Eliminare questa tappa?')">Elimina Tappa</button>
+                </form>
+                {% endif %}
+            </div>
+        `);
+        bounds.push([{{ t.lat }}, {{ t.lng }}]);
+    {% endfor %}
+
+    if(bounds.length > 0) {
+        map.fitBounds(bounds, {padding: [50, 50]});
+    }
+
+    // Ricerca Tappa (Solo per Admin)
+    var btnCerca = document.getElementById('btn_cerca_tappa');
+    if(btnCerca) {
+        btnCerca.addEventListener('click', async function() {
+            let query = document.getElementById('tappa_input').value;
+            if(!query) return;
+            
+            let fb = document.getElementById('tappa_feedback');
+            fb.classList.remove('d-none', 'text-danger', 'text-success');
+            fb.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Ricerca...';
+            
+            try {
+                // Cerchiamo preferibilmente vicino alla destinazione del viaggio
+                let proximity = "";
+                {% if viaggio.lat and viaggio.lng %}
+                proximity = `&viewbox={{ viaggio.lng-0.5 }},{{ viaggio.lat+0.5 }},{{ viaggio.lng+0.5 }},{{ viaggio.lat-0.5 }}&bounded=1`;
+                {% endif %}
+                
+                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}${proximity}&limit=1`);
+                let data = await res.json();
+                
+                if(data && data.length > 0) {
+                    let locName = data[0].display_name.split(",").slice(0, 3).join(",");
+                    document.getElementById('hidden_tappa_nome').value = locName;
+                    document.getElementById('hidden_tappa_lat').value = data[0].lat;
+                    document.getElementById('hidden_tappa_lng').value = data[0].lon;
+                    
+                    fb.classList.add('text-success');
+                    fb.innerHTML = '<i class="fa-solid fa-check"></i> ' + locName;
+                    document.getElementById('btn_salva_tappa').disabled = false;
+                } else {
+                    throw new Error();
+                }
+            } catch(e) {
+                fb.classList.add('text-danger');
+                fb.innerHTML = '<i class="fa-solid fa-xmark"></i> Non trovato.';
+            }
+        });
+    }
+});
+</script>
+
+{% include 'chat_spese.html' %}
 {% endblock %}

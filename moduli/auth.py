@@ -1,41 +1,59 @@
-import streamlit as st
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, Response
 from modelli import Utente
+from database import engine
+from sqlalchemy import text
 
-def mostra_pagina_login():
-    st.title("NomadCash - Accesso")
-    
-    tab_login, tab_registrazione = st.tabs(["Login", "Registrazione"])
-    
-    with tab_login:
-        st.header("Accedi")
-        email_login = st.text_input("Email", key="login_email")
-        password_login = st.text_input("Password", type="password", key="login_pw")
+auth_bp = Blueprint('auth', __name__)
+
+@auth_bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if 'utente_email' in session:
+        return redirect(url_for('dashboard'))
         
-        if st.button("Entra"):
-            if email_login and password_login:
-                utente = Utente.login(email_login, password_login)
-                if utente:
-                    st.session_state.utente_loggato = utente
-                    st.rerun()
-                else:
-                    st.error("Email o password non validi.")
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        if action == 'login':
+            email = request.form.get('email')
+            password = request.form.get('password')
+            utente = Utente.login(email, password)
+            if utente:
+                session['utente_email'] = utente['email']
+                session['utente_nome'] = utente['nome']
+                return redirect(url_for('dashboard'))
             else:
-                st.warning("Inserisci tutti i dati.")
+                flash("Email o password non validi.", "danger")
                 
-    with tab_registrazione:
-        st.header("Nuovo Utente")
-        nome_reg = st.text_input("Nome")
-        email_reg = st.text_input("Email")
-        avatar_reg = st.selectbox("Avatar", ["Avatar 1", "Avatar 2", "Avatar 3"])
-        password_reg = st.text_input("Password", type="password")
-        
-        if st.button("Registrati"):
-            if nome_reg and email_reg and password_reg:
-                try:
-                    nuovo_utente = Utente(nome=nome_reg, email=email_reg, avatar=avatar_reg, password=password_reg, admin=False)
-                    nuovo_utente.create()
-                    st.success("Registrazione completata. Ora puoi fare il login.")
-                except ValueError as e:
-                    st.error(str(e))
-            else:
-                st.warning("Compila tutti i campi.")
+        elif action == 'register':
+            nome = request.form.get('nome')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            
+            avatar_file = request.files.get('avatar')
+            avatar_bytes = None
+            if avatar_file and avatar_file.filename != '':
+                avatar_bytes = avatar_file.read()
+            
+            try:
+                nuovo_utente = Utente(nome=nome, email=email, avatar=avatar_bytes, password=password, admin=False)
+                nuovo_utente.create()
+                flash("Registrazione completata. Ora puoi accedere.", "success")
+            except ValueError as e:
+                flash(str(e), "danger")
+                
+    return render_template('auth.html')
+
+@auth_bp.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('auth.login'))
+
+@auth_bp.route('/avatar/<email>')
+def get_avatar(email):
+    query = text("SELECT avatar FROM utenti WHERE email = :e")
+    with engine.connect() as conn:
+        res = conn.execute(query, {"e": email}).fetchone()
+        if res and res[0]:
+            return Response(res[0], mimetype='image/jpeg')
+        # Fallback se non c'è avatar
+        return redirect(url_for('static', filename='default_avatar.png'))

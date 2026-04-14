@@ -18,6 +18,17 @@
     </div>
 </div>
 
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card shadow-sm border-0" style="overflow: hidden;">
+            <div class="card-body p-0">
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+                <div id="viaggi_map" style="height: 400px; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     {% if viaggi %}
         {% for v in viaggi %}
@@ -55,4 +66,36 @@
         </div>
     {% endif %}
 </div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var map = L.map('viaggi_map').setView([41.9028, 12.4964], 4);
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+            maxZoom: 19
+        }).addTo(map);
+
+        var bounds = [];
+        
+        {% for v in viaggi %}
+            {% if v.lat and v.lng and (v.lat != 0.0 or v.lng != 0.0) %}
+                var marker = L.marker([{{ v.lat }}, {{ v.lng }}]).addTo(map);
+                marker.bindPopup(`
+                    <div class="text-center p-1">
+                        <h6 class="fw-bold mb-1">{{ v.nome_viaggio|replace("'", "\\'")|replace('"', '\\"') }}</h6>
+                        <small class="text-muted d-block mb-2"><i class="fa-solid fa-location-dot me-1"></i> {{ v.destinazione_nome|replace("'", "\\'")|replace('"', '\\"') }}</small>
+                        <a href="{{ url_for('dettaglio_viaggio', id_viaggio=v.id_viaggio) }}" class="btn btn-sm btn-primary w-100">Apri</a>
+                    </div>
+                `);
+                bounds.push([{{ v.lat }}, {{ v.lng }}]);
+            {% endif %}
+        {% endfor %}
+        
+        if(bounds.length > 0) {
+            map.fitBounds(bounds, {padding: [50, 50]});
+        }
+    });
+</script>
 {% endblock %}
