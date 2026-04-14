@@ -94,6 +94,21 @@ def dettaglio_viaggio(id_viaggio):
             
     tappe_viaggio = Tappa.get_tappe_by_viaggio(id_viaggio)
     cronologia = Spesa.get_spese_per_viaggio(id_viaggio)
+    
+    # Inseriamo la tassa NomadCash nella cronologia se presente
+    if not isinstance(risultato_bilancio, str) and risultato_bilancio["info_generali"]["tassa_totale"] > 0:
+        tassa_entry = {
+            'nome_utente': 'NomadCash',
+            'email_utente': 'sistema@nomadcash.com',
+            'data_spesa': 'Sistema',
+            'testo_messaggio': 'Commissione servizio NomadCash (calcolata per partecipante)',
+            'importo': risultato_bilancio["info_generali"]["tassa_totale"],
+            'categoria': 'Sistema',
+            'pagata': True,
+            'id_spesa': 0
+        }
+        cronologia.insert(0, tassa_entry)
+
     return render_template('dettaglio_viaggio.html', 
                            viaggio=viaggio, 
                            bilancio=bilancio_info, 
